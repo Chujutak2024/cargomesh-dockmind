@@ -1,0 +1,40 @@
+﻿import "server-only";
+import {localScenarioCookieOptions} from "./local-profile";
+
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "@/types/database-v2.types";
+import { currentMcpSupabaseAccessToken } from "@/server/mcp/auth/request-context";
+import { createUserAccessSupabaseClient } from "./user-access";
+
+export async function createServerSupabaseClient(): Promise<ReturnType<typeof createUserAccessSupabaseClient>> {
+  const requestAccessToken = currentMcpSupabaseAccessToken();
+  if (requestAccessToken) return createUserAccessSupabaseClient(requestAccessToken);
+  const cookieStore = await cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables."
+    );
+  }
+
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: localScenarioCookieOptions({profile:process.env.CARGOMESH_LOCAL_PROFILE,url:supabaseUrl,production:process.env.NODE_ENV==="production"}),
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // Ignored if called from Server Component without response headers
+        }
+      },
+    },
+  }) as unknown as ReturnType<typeof createUserAccessSupabaseClient>;
+}

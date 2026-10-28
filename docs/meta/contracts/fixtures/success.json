@@ -1,0 +1,72 @@
+{
+  "fixtureType": "SYNTHETIC_NO_INFERENCE",
+  "input": {
+    "schemaVersion": "1.0",
+    "inputRevision": 7,
+    "language": "en",
+    "text": "12 pallets of machinery, 100 kg each.",
+    "evidence": []
+  },
+  "proposal": {
+    "schemaVersion": "1.0",
+    "inputRevision": 7,
+    "status": "PROPOSED",
+    "refusalReason": null,
+    "fields": [
+      {
+        "field": "unitType",
+        "value": "PALLET",
+        "provenance": {
+          "source": "text",
+          "evidenceId": null,
+          "inputRevision": 7,
+          "basis": "EXPLICIT",
+          "quote": "12 pallets"
+        }
+      },
+      {
+        "field": "unitQuantity",
+        "value": 12,
+        "provenance": {
+          "source": "text",
+          "evidenceId": null,
+          "inputRevision": 7,
+          "basis": "EXPLICIT",
+          "quote": "12 pallets"
+        }
+      },
+      {
+        "field": "unitWeightKg",
+        "value": 100,
+        "provenance": {
+          "source": "text",
+          "evidenceId": null,
+          "inputRevision": 7,
+          "basis": "EXPLICIT",
+          "quote": "100 kg each"
+        }
+      },
+      {
+        "field": "cargoDescription",
+        "value": "machinery",
+        "provenance": {
+          "source": "text",
+          "evidenceId": null,
+          "inputRevision": 7,
+          "basis": "EXPLICIT",
+          "quote": "machinery"
+        }
+      }
+    ],
+    "missingFields": [
+      "unitLengthCm",
+      "unitWidthCm",
+      "unitHeightCm",
+      "handlingRequirements"
+    ],
+    "warnings": [
+      "INCOMPLETE_DECLARATION"
+    ],
+    "requiresHumanConfirmation": true
+  }
+}

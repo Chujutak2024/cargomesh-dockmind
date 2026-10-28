@@ -1,0 +1,176 @@
+.shell {
+  color-scheme: light;
+  font-family: var(--cm-font-sans);
+  /* Client mockup tokens stay scoped: Carrier retains its own presentation. */
+  --cm-color-canvas: #e9eff6;
+  --cm-color-sidebar: #eef3f8;
+  --cm-color-line: #dce4ee;
+  --cm-color-surface-subtle: #f1f5f9;
+  --cm-color-surface-tint: #f6f8fc;
+  --cm-color-primary: #2b59ff;
+  --cm-color-primary-hover: #234bdc;
+  --cm-color-logistics: #2b59ff;
+  --cm-color-logistics-hover: #234bdc;
+  --cm-color-focus: #617fff;
+  --cm-color-selected: #eef2ff;
+  --cm-color-action: var(--cm-color-primary);
+  --cm-color-action-hover: var(--cm-color-primary-hover);
+  --cm-color-action-tint: var(--cm-color-selected);
+  --cm-color-action-line: #b9c8ff;
+  --cm-color-preliminary-line: #c7d2fe;
+  --cm-color-preliminary-surface: var(--cm-color-selected);
+  --cm-color-confirmed-ink: var(--cm-color-positive);
+  --client-assistant-clearance: 5.5rem;
+}
+.shell[data-collapsed="false"] { --carrier-nav-width: 260px; }
+.shell .navItem { min-height: 44px; border-radius: 10px; font-size: 14px; color: #283b51; }
+.shell .navItem > svg { color: var(--cm-color-logistics); }
+.shell .navItem[aria-current="page"] { color: #172b42; border-color: #dce4ee; font-weight: 600; box-shadow: 0 1px 3px #0f172a08; }
+.shell:has([data-chat-open="true"]) { --client-assistant-clearance: 0rem; }
+
+.contentColumn {
+  min-width: 0;
+  container-type: inline-size;
+  /* Match the assistant surface: the page makes room instead of jumping under it. */
+  transition: margin-right .56s cubic-bezier(.22,1,.36,1);
+}
+
+@media (min-width: 1200px) { .shell[data-assistant-docked="true"] .contentColumn { margin-right: 27rem; } }
+@media (prefers-reduced-motion: reduce) { .contentColumn { transition: none; } }
+
+.topbar {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid var(--cm-color-line);
+  padding: 0.55rem 1.5rem;
+  background: var(--cm-color-surface);
+}
+
+.context {
+  display: grid;
+  min-width: 0;
+  gap: 0.04rem;
+}
+
+.context strong {
+  overflow: hidden;
+  color: var(--cm-color-heading);
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contextSubtitle {
+  display: none;
+  overflow: hidden;
+  color: var(--cm-color-muted);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbarActions {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.search {
+  display: none;
+  min-width: min(18.75rem, 24vw);
+  min-height: 2.8rem;
+  align-items: center;
+  gap: 0.58rem;
+  border: 1px solid var(--cm-color-line);
+  border-radius: var(--cm-radius-md);
+  padding: 0 0.7rem;
+  background: var(--cm-color-surface);
+  color: var(--cm-color-muted);
+  transition: border-color var(--cm-motion-interaction) var(--cm-motion-ease), box-shadow var(--cm-motion-interaction) var(--cm-motion-ease);
+}
+
+.exampleAction { min-height:2.8rem; height:2.8rem; flex-shrink:0; white-space:nowrap; font-size:.8125rem; }
+@media(max-width:767px) { .exampleAction { width:2.8rem; padding-inline:0; }.exampleAction>span { display:none; } }
+
+.search:focus-within {
+  border-color: var(--cm-color-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cm-color-focus) 18%, transparent);
+}
+
+.search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cm-color-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.search input::placeholder { color: var(--cm-color-muted); }
+.search kbd { border: 1px solid var(--cm-color-line); border-radius: 0.35rem; padding: 0.14rem 0.3rem; color: var(--cm-color-muted); font: inherit; font-size: 0.56rem; }
+
+.avatar { display: grid; width: 2.55rem; height: 2.55rem; flex: 0 0 auto; place-items: center; border-radius: 0.7rem; background: var(--cm-color-heading); color: white; font-size: 0.66rem; font-weight: 800; }
+.userCopy { display: none; min-width: 0; }
+.userCopy strong, .userCopy span { display: block; overflow: hidden; max-width: 10rem; text-overflow: ellipsis; white-space: nowrap; }
+.userCopy strong { color: var(--cm-color-ink); font-size: 0.75rem; }
+.userCopy span { margin-top: 0.12rem; color: var(--cm-color-muted); font-size: 0.65rem; text-transform: capitalize; }
+
+.signOut button, .signOutLink {
+  display: inline-flex;
+  min-width: 2.55rem;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 1px solid var(--cm-color-line);
+  border-radius: var(--cm-radius-md);
+  padding: 0 0.65rem;
+  background: var(--cm-color-surface);
+  color: var(--cm-color-heading);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.signOut button:hover, .signOutLink:hover { border-color: var(--cm-color-line-strong); background: var(--cm-color-selected); }
+.main { min-width: 0; min-height: calc(100dvh - 4rem); padding: 1.5rem clamp(1rem, 2.2vw, 2rem) calc(3rem + var(--client-assistant-clearance)); background: var(--cm-color-canvas); }
+.motionRegion { min-width: 0; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.shell :is(button, a, input, select):focus-visible { outline: 3px solid color-mix(in srgb, var(--cm-color-focus) 34%, transparent); outline-color: var(--cm-color-focus) !important; outline-offset: 2px; }
+
+@media (min-width: 640px) {
+  .contextSubtitle, .userCopy { display: block; }
+}
+
+@media (min-width: 1200px) { .search { display: flex; } }
+@container (max-width: 1000px) { .search { display: none; } }
+@container (max-width: 750px) { .userCopy { display: none; } .contextSubtitle { display: none; } }
+@container (max-width: 600px) { .avatar { display: none; } }
+
+@media (max-width: 767px) {
+  .topbar { gap: 0.45rem; padding-inline: 0.8rem; }
+  .main { padding: 1.25rem 0.9rem calc(4rem + var(--client-assistant-clearance)); }
+  .contextSubtitle { display: none; }
+  .avatar, .userCopy { display: none; }
+  .signOut :is(button, a) span, .signOutLink span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+}
+
+@media (max-width: 430px) {
+  .topbar { padding-inline: 0.55rem; }
+  .context { max-width: 8rem; }
+  .topbarActions { gap: 0.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) { .search { transition: none; } }

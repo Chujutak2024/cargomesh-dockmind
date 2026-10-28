@@ -1,0 +1,15 @@
+{
+  "fixtureType": "SYNTHETIC_NO_INFERENCE",
+  "input": {
+    "schemaVersion": "1.0",
+    "inputRevision": 7,
+    "language": "en",
+    "text": "12 pallets of machinery, 100 kg each.",
+    "evidence": []
+  },
+  "simulatedFailure": "NETWORK_FAILURE",
+  "expectedError": {
+    "code": "PROVIDER_UNAVAILABLE",
+    "retryable": true
+  }
+}
