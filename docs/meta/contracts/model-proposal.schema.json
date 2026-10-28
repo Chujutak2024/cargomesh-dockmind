@@ -1,0 +1,742 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "inputRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PROPOSED",
+        "REFUSED"
+      ]
+    },
+    "refusalReason": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "UNSUPPORTED_CONTENT",
+            "NOT_A_CARGO_DECLARATION"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "cargoDescription"
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "provenance": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "photo",
+                      "label",
+                      "audio"
+                    ]
+                  },
+                  "evidenceId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "inputRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "basis": {
+                    "type": "string",
+                    "enum": [
+                      "EXPLICIT",
+                      "VISIBLE"
+                    ]
+                  },
+                  "quote": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "source",
+                  "evidenceId",
+                  "inputRevision",
+                  "basis",
+                  "quote"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitType"
+              },
+              "value": {
+                "type": "string",
+                "enum": [
+                  "PALLET",
+                  "BOX"
+                ]
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitQuantity"
+              },
+              "value": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitWeightKg"
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitLengthCm"
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100000
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitWidthCm"
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100000
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "unitHeightCm"
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100000
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "const": "handlingRequirements"
+              },
+              "value": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "minItems": 1,
+                "maxItems": 12
+              },
+              "provenance": {
+                "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+              }
+            },
+            "required": [
+              "field",
+              "value",
+              "provenance"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "maxItems": 8
+    },
+    "missingFields": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "cargoDescription",
+          "unitType",
+          "unitQuantity",
+          "unitWeightKg",
+          "unitLengthCm",
+          "unitWidthCm",
+          "unitHeightCm",
+          "handlingRequirements"
+        ]
+      },
+      "maxItems": 8
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "VISIBLE_COUNT_ONLY",
+          "NO_SCALE",
+          "UNVERIFIED_LABEL",
+          "INCOMPLETE_DECLARATION"
+        ]
+      },
+      "maxItems": 4
+    },
+    "requiresHumanConfirmation": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "inputRevision",
+    "status",
+    "refusalReason",
+    "fields",
+    "missingFields",
+    "warnings",
+    "requiresHumanConfirmation"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_source"
+        },
+        "evidenceId": {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_evidenceId"
+        },
+        "inputRevision": {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_inputRevision"
+        },
+        "basis": {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_basis"
+        },
+        "quote": {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_quote"
+        }
+      },
+      "required": [
+        "source",
+        "evidenceId",
+        "inputRevision",
+        "basis",
+        "quote"
+      ],
+      "additionalProperties": false
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_source": {
+      "type": "string",
+      "enum": [
+        "text",
+        "photo",
+        "label",
+        "audio"
+      ]
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_evidenceId": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_evidenceId_anyOf_0"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_inputRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_basis": {
+      "type": "string",
+      "enum": [
+        "EXPLICIT",
+        "VISIBLE"
+      ]
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_quote": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_quote_anyOf_0"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_evidenceId_anyOf_0": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance_properties_quote_anyOf_0": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "cargo_declaration_proposal_v1": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "inputRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PROPOSED",
+            "REFUSED"
+          ]
+        },
+        "refusalReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "UNSUPPORTED_CONTENT",
+                "NOT_A_CARGO_DECLARATION"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "cargoDescription"
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "provenance": {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "text",
+                          "photo",
+                          "label",
+                          "audio"
+                        ]
+                      },
+                      "evidenceId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "inputRevision": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "basis": {
+                        "type": "string",
+                        "enum": [
+                          "EXPLICIT",
+                          "VISIBLE"
+                        ]
+                      },
+                      "quote": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "evidenceId",
+                      "inputRevision",
+                      "basis",
+                      "quote"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitType"
+                  },
+                  "value": {
+                    "type": "string",
+                    "enum": [
+                      "PALLET",
+                      "BOX"
+                    ]
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitQuantity"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitWeightKg"
+                  },
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitLengthCm"
+                  },
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 100000
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitWidthCm"
+                  },
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 100000
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "unitHeightCm"
+                  },
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 100000
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "const": "handlingRequirements"
+                  },
+                  "value": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  },
+                  "provenance": {
+                    "$ref": "#/definitions/cargo_declaration_proposal_v1_properties_fields_items_anyOf_0_properties_provenance"
+                  }
+                },
+                "required": [
+                  "field",
+                  "value",
+                  "provenance"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "maxItems": 8
+        },
+        "missingFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "cargoDescription",
+              "unitType",
+              "unitQuantity",
+              "unitWeightKg",
+              "unitLengthCm",
+              "unitWidthCm",
+              "unitHeightCm",
+              "handlingRequirements"
+            ]
+          },
+          "maxItems": 8
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "VISIBLE_COUNT_ONLY",
+              "NO_SCALE",
+              "UNVERIFIED_LABEL",
+              "INCOMPLETE_DECLARATION"
+            ]
+          },
+          "maxItems": 4
+        },
+        "requiresHumanConfirmation": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "inputRevision",
+        "status",
+        "refusalReason",
+        "fields",
+        "missingFields",
+        "warnings",
+        "requiresHumanConfirmation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

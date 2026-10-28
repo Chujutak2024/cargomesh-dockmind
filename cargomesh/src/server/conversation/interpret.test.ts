@@ -1,0 +1,129 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildConversationPrompt, conversationBedrockConfig, interpretConversationTurn } from "./interpret";
+
+const input = { schemaVersion: "2.0" as const, text: "from Lima to Arequipa", currentField: "originFacilityId" as const };
+
+test("Bedrock receives bounded prior facts as context, never as a business action", () => {
+  const prompt = JSON.parse(buildConversationPrompt({ ...input, text: "change it to Piura", context: {
+    knownFields: [{ field: "originFacilityId", value: "Lima" }], lastAskedField: "destinationFacilityId", failedAttempts: 1,
+  } }));
+  assert.equal(prompt.context.knownFields[0].value, "Lima");
+  assert.equal(prompt.context.lastAskedField, "destinationFacilityId");
+  assert.equal(prompt.organizationId, undefined);
+  assert.equal(prompt.confirmed, undefined);
+});
+
+test("disabled Bedrock uses deterministic extraction without an AWS call", async () => {
+  const config = conversationBedrockConfig({});
+  const result = await interpretConversationTurn(input, { config, invoke: async () => { throw new Error("should not invoke"); } });
+  assert.equal(result.mode, "DETERMINISTIC");
+  assert.equal(result.interpretation.fields.length, 2);
+});
+
+test("an explicit ROAD command bypasses the model and retains domain intent", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const result = await interpretConversationTurn({ schemaVersion: "2.0", text: "Check ROAD for my saved draft.", currentField: null }, {
+    config, invoke: async () => { throw new Error("explicit action should not reach the model"); },
+  });
+  assert.equal(result.mode, "DETERMINISTIC");
+  assert.equal(result.interpretation.intent, "EVALUATE");
+});
+
+test("configuration bounds tokens and timeout and never embeds credentials", () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model", CARGOMESH_BEDROCK_CONVERSATION_MAX_TOKENS: "99999", CARGOMESH_BEDROCK_CONVERSATION_TIMEOUT_MS: "99999" });
+  assert.equal(config.maxTokens, 400);
+  assert.equal(config.timeoutMs, 6000);
+  assert.equal("credentials" in config, false);
+});
+
+test("Bedrock Mantle configuration selects the AWS adapter without storing a key", () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_ENDPOINT: "mantle", CARGOMESH_BEDROCK_MODEL_ID: "openai.gpt-oss-120b", OPENAI_API_KEY: "redacted" });
+  assert.equal(config.endpoint, "mantle");
+  assert.equal(config.modelId, "openai.gpt-oss-120b");
+  assert.equal("apiKey" in config, false);
+});
+
+test("valid Bedrock proposal is Zod-validated and records bounded cost evidence", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model", CARGOMESH_BEDROCK_INPUT_USD_PER_MILLION_TOKENS: "1", CARGOMESH_BEDROCK_OUTPUT_USD_PER_MILLION_TOKENS: "2" });
+  const result = await interpretConversationTurn(input, {
+    config, now: () => 100,
+    invoke: async () => ({
+      output: { message: { role: "assistant", content: [{ text: JSON.stringify({ intent: "PROVIDE", fields: [{ field: "originFacilityId", value: "Lima" }], acknowledgment: "Got it." }) }] } },
+      usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 }, stopReason: "end_turn", metrics: { latencyMs: 100 }, $metadata: {},
+    }),
+  });
+  assert.equal(result.mode, "BEDROCK");
+  assert.equal(result.telemetry?.estimatedCostUsd, 0.00014);
+});
+
+test("a bounded Spanish guidance sentence can be returned without inventing a field", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const result = await interpretConversationTurn({ ...input, text: "No sé qué camión elegir" }, {
+    config,
+    invoke: async () => ({
+      output: { message: { role: "assistant", content: [{ text: JSON.stringify({ intent: "PROVIDE", fields: [], acknowledgment: "Puedo orientarte con el tipo de camión cuando me indiques el peso y las dimensiones de la carga." }) }] } },
+      usage: { inputTokens: 90, outputTokens: 35, totalTokens: 125 }, stopReason: "end_turn", metrics: { latencyMs: 100 }, $metadata: {},
+    }),
+  });
+  assert.equal(result.mode, "BEDROCK");
+  assert.equal(result.interpretation.fields.length, 0);
+  assert.match(result.interpretation.acknowledgment ?? "", /peso y las dimensiones/);
+});
+
+test("Nova fenced JSON with a field map is normalized then strictly validated", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const result = await interpretConversationTurn(input, {
+    config,
+    invoke: async () => ({
+      output: { message: { role: "assistant", content: [{ text: '```json\n{"intent":"PROVIDE","fields":{"originFacilityId":"Lima","destinationFacilityId":"Arequipa","unitQuantity":12},"acknowledgment":"Got it."}\n```' }] } },
+      usage: { inputTokens: 222, outputTokens: 63, totalTokens: 285 }, stopReason: "end_turn", metrics: { latencyMs: 365 }, $metadata: {},
+    }),
+  });
+  assert.equal(result.mode, "BEDROCK");
+  assert.deepEqual(result.interpretation.fields, [
+    { field: "originFacilityId", value: "Lima" },
+    { field: "destinationFacilityId", value: "Arequipa" },
+    { field: "unitQuantity", value: "12" },
+  ]);
+});
+
+test("forced Nova tool proposal is data only and passes the versioned validator", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const result = await interpretConversationTurn(input, {
+    config,
+    invoke: async () => ({
+      output: { message: { role: "assistant", content: [{ toolUse: { toolUseId: "test", name: "propose_conversation_turn", input: { intent: "PROVIDE", fields: [{ field: "originFacilityId", value: "Lima" }] } } }] } },
+      usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 }, stopReason: "tool_use", metrics: { latencyMs: 100 }, $metadata: {},
+    }),
+  });
+  assert.equal(result.mode, "BEDROCK");
+  assert.deepEqual(result.interpretation.fields, [{ field: "originFacilityId", value: "Lima" }]);
+});
+
+test("invalid model output and AWS failures fall back without logging user text", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const invalid = await interpretConversationTurn(input, { config, invoke: async () => ({ output: { message: { role: "assistant", content: [{ text: '{"intent":"BOOKING","fields":[{"field":"organizationId","value":"forged"}]}' }] } }, usage: { inputTokens: 10, outputTokens: 10, totalTokens: 20 }, stopReason: "end_turn", metrics: { latencyMs: 10 }, $metadata: {} }) });
+  const failed = await interpretConversationTurn(input, { config, invoke: async () => { throw new Error("denied"); } });
+  assert.equal(invalid.mode, "DETERMINISTIC");
+  assert.equal(failed.mode, "DETERMINISTIC");
+});
+
+test("Bedrock cannot turn a help question into a facility or booking", async () => {
+  const config = conversationBedrockConfig({ CARGOMESH_BEDROCK_CONVERSATION_ENABLED: "true", CARGOMESH_BEDROCK_REGION: "us-east-1", CARGOMESH_BEDROCK_MODEL_ID: "test-model" });
+  const question = { ...input, text: "hi can you tell me to make a request" };
+  const response = await interpretConversationTurn(question, { config, invoke: async () => ({
+    output: { message: { role: "assistant", content: [{ text: JSON.stringify({ intent: "PROVIDE", fields: [{ field: "originFacilityId", value: "hi can you tell me to make a request" }] }) }] } },
+    usage: { inputTokens: 10, outputTokens: 10, totalTokens: 20 }, stopReason: "end_turn", metrics: { latencyMs: 10 }, $metadata: {},
+  }) });
+  assert.equal(response.mode, "DETERMINISTIC");
+  assert.equal(response.interpretation.intent, "HELP");
+  assert.deepEqual(response.interpretation.fields, []);
+});
+
+test("long multi-detail input always respects the published response contract", async () => {
+ const {InterpretationResponseSchema}=await import("@/features/v2-conversation-prep/interpretation");
+ const result=await interpretConversationTurn({schemaVersion:"2.0",currentField:"originFacilityId",text:"Quiero crear un pedido de prueba: una caja de insumos de carga general, 100 kg, 1 m³, dimensiones 100 × 100 × 100 cm. Recojo en la sede de Lima y entrega en la sede de Arequipa de Pacific Produce. Mantener seco, no apilar y conservar la caja entera. Recojo el 22 de octubre de 2026 de 08:00 a 10:00, entrega el 23 de octubre de 2026 de 08:00 a 13:00, hora de Perú."},{config:conversationBedrockConfig({})});
+ assert.equal(InterpretationResponseSchema.safeParse(result).success,true);
+ assert.equal(result.interpretation.fields.some(f=>f.field==="destinationFacilityId"&&f.value==="10:00"),false);
+});

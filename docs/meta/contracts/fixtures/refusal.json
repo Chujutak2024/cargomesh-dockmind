@@ -1,0 +1,20 @@
+{
+  "fixtureType": "SYNTHETIC_NO_INFERENCE",
+  "input": {
+    "schemaVersion": "1.0",
+    "inputRevision": 7,
+    "language": "en",
+    "text": "Please book and pay for transport.",
+    "evidence": []
+  },
+  "proposal": {
+    "schemaVersion": "1.0",
+    "inputRevision": 7,
+    "status": "REFUSED",
+    "refusalReason": "NOT_A_CARGO_DECLARATION",
+    "fields": [],
+    "missingFields": [],
+    "warnings": [],
+    "requiresHumanConfirmation": true
+  }
+}

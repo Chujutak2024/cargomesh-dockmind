@@ -1,0 +1,151 @@
+import { displayDemoText } from "@/shared/lib/demo-presentation";
+import type { IntakeOptionsData } from "./contracts";
+import type { V2IntakePrototypeDraft } from "./prototype-model";
+
+export type ConversationField = Exclude<keyof V2IntakePrototypeDraft,'primaryGroupId'|'primaryOriginalIndex'|'additionalUnits'|'pickupAlternatives'|'deliveryAlternatives'|'planningTimeZone'|'reviewedConversationFields'>;
+const ENGLISH_EQUIPMENT_LABELS: Record<string, string> = {
+  BOX_TRUCK: "Box truck", REFRIGERATED_TRUCK: "Refrigerated truck", SECURE_BOX_TRUCK: "Secure box truck",
+  HAZMAT_TRUCK: "Hazmat truck", FLATBED: "Flatbed truck", DUMP_TRUCK: "Dump truck",
+  TANKER_TRUCK: "Tanker truck", TRACTOR_TRAILER: "Tractor trailer",
+};
+const ENGLISH_CATEGORY_LABELS: Record<string, string> = {
+  GENERAL: "General cargo", FOOD: "Food", PHARMA: "Pharmaceuticals", CHEMICAL: "Chemicals",
+  MACHINERY: "Machinery", CONSTRUCTION: "Construction materials", AGRICULTURAL: "Agricultural goods", LIQUID: "Liquids",
+};
+export const CONVERSATION_FIELDS = [
+  "urgency", "loadSize",
+  "originFacilityId", "destinationFacilityId", "categoryCode", "packaging", "cargoDescription",
+  "unitQuantity", "unitWeightPerUnitKg", "unitVolumePerUnitM3", "unitLengthCm", "unitWidthCm",
+  "unitHeightCm", "divisible", "unitIndivisible", "unitStackable", "requirements", "temperatureMinCelsius", "temperatureMaxCelsius", "pickupWindowStartsAt", "pickupWindowEndsAt", "deliveryWindowStartsAt",
+  "deliveryWindowEndsAt", "requiredEquipment", "pickupContactName", "pickupContactPhoneE164",
+  "recipientContactName", "recipientContactPhoneE164",
+] as const satisfies readonly ConversationField[];
+export type GuidedConversationField = (typeof CONVERSATION_FIELDS)[number] | "pickupContactEmail" | "recipientContactEmail";
+
+export function resolveConversationSuggestions(
+  suggestions: Array<{ field: GuidedConversationField; value: string }>,
+  options: IntakeOptionsData,
+) {
+  return suggestions.map(({ field, value }) => ({
+    field,
+    value,
+    parsed: parseConversationField(field, value, options),
+  }));
+}
+
+export const FIELD_QUESTION: Record<ConversationField, string> = {
+  urgency:"¿Es urgente o puedes programarlo con flexibilidad?",loadSize:"¿La carga es liviana, mediana o pesada? Luego precisaré peso y volumen.",
+  originFacilityId: "¿Dónde se recogerá la carga?",
+  destinationFacilityId: "¿Dónde se entregará la carga?",
+  categoryCode: "¿Qué tipo de carga transportarás?",
+  packaging: "¿Cómo está embalada la carga?",
+  cargoDescription: "Describe la carga.", totalWeightKg: "¿Peso total en kg?",
+  totalVolumeM3: "¿Volumen total en m³?", divisible: "¿La carga es divisible? sí/no",
+  requirements: "¿Algún requisito especial?", temperatureMinCelsius: "¿Temperatura mínima en °C?",
+  temperatureMaxCelsius: "¿Temperatura máxima en °C?", unitPackageType: "¿Tipo de empaque por unidad?",
+  unitQuantity: "¿Cuántas unidades son?", unitWeightPerUnitKg: "¿Peso por unidad en kg?",
+  unitVolumePerUnitM3: "¿Volumen por unidad en m³?", unitLengthCm: "¿Largo por unidad en cm?",
+  unitWidthCm: "¿Ancho por unidad en cm?", unitHeightCm: "¿Alto por unidad en cm?",
+  unitIndivisible: "¿Cada unidad es indivisible? sí/no", unitStackable: "¿Se pueden apilar las unidades? sí/no",
+  pickupWindowStartsAt: "¿Cuándo inicia la ventana de recojo? Usa AAAA-MM-DDTHH:mm.",
+  pickupWindowEndsAt: "¿Cuándo termina la ventana de recojo? Usa AAAA-MM-DDTHH:mm.",
+  deliveryWindowStartsAt: "¿Cuándo inicia la ventana de entrega? Usa AAAA-MM-DDTHH:mm.",
+  deliveryWindowEndsAt: "¿Cuándo termina la ventana de entrega? Usa AAAA-MM-DDTHH:mm.",
+  requiredEquipment: "¿Qué camión o equipo necesitas?",
+  pickupContactName: "¿Nombre del contacto de recojo?", pickupContactPhoneE164: "¿Teléfono de recojo en formato E.164?",
+  pickupContactEmail: "¿Correo del contacto de recojo?", recipientContactName: "¿Nombre de quien recibe?",
+  recipientContactPhoneE164: "¿Teléfono de quien recibe en formato E.164?", recipientContactEmail: "¿Correo de quien recibe?",
+};
+
+const ENGLISH_QUESTION: Record<GuidedConversationField, string> = {
+  divisible:"May the shipment be split between trucks?", unitIndivisible:"Must each package travel whole?", unitStackable:"Can the packages be stacked?", requirements:"Does the cargo need special handling, such as refrigeration, dry storage or fragile handling?", temperatureMinCelsius:"What is the minimum temperature in Celsius?", temperatureMaxCelsius:"What is the maximum temperature in Celsius?",
+  urgency:"Is this urgent or can it be scheduled flexibly?",loadSize:"Is this a light, medium or heavy shipment? We will also need its weight and volume.",
+  originFacilityId: "Where should the cargo be picked up?",
+  destinationFacilityId: "Where should the cargo be delivered?",
+  categoryCode: "What type of cargo is it?",
+  packaging: "How is the cargo packaged?",
+  cargoDescription: "Please describe the cargo.",
+  unitQuantity: "How many units are there?",
+  unitWeightPerUnitKg: "What is the weight per unit in kg?",
+  unitVolumePerUnitM3: "What is the volume per unit in m³?",
+  unitLengthCm: "What is each unit's length in cm?",
+  unitWidthCm: "What is each unit's width in cm?",
+  unitHeightCm: "What is each unit's height in cm?",
+  pickupWindowStartsAt: "When does the pickup window start? Use YYYY-MM-DDTHH:mm.",
+  pickupWindowEndsAt: "When does the pickup window end? Use YYYY-MM-DDTHH:mm.",
+  deliveryWindowStartsAt: "When does the delivery window start? Use YYYY-MM-DDTHH:mm.",
+  deliveryWindowEndsAt: "When does the delivery window end? Use YYYY-MM-DDTHH:mm.",
+  requiredEquipment: "What truck or equipment do you need?",
+  pickupContactName: "What is the pickup contact's name?",
+  pickupContactPhoneE164: "What is the pickup phone number in E.164 format?",
+  pickupContactEmail: "What is the pickup contact's email?",
+  recipientContactName: "What is the recipient's name?",
+  recipientContactPhoneE164: "What is the recipient's phone number in E.164 format?",
+  recipientContactEmail: "What is the recipient's email?",
+};
+
+export function questionForField(field: GuidedConversationField, language: "es-PE" | "en-US"): string {
+  return language === "en-US" ? ENGLISH_QUESTION[field] : FIELD_QUESTION[field];
+}
+
+export function choicesForField(field: ConversationField, options: IntakeOptionsData): Array<{ value: string; label: string }> {
+  if(field==="urgency")return [{value:"URGENT",label:"Urgente / Urgent"},{value:"SCHEDULED",label:"Sin urgencia / Not urgent"}];
+  if(field==="loadSize")return [{value:"LIGHT",label:"Liviana / Light"},{value:"MEDIUM",label:"Mediana / Medium"},{value:"HEAVY",label:"Pesada / Heavy"}];
+  if (field === "originFacilityId" || field === "destinationFacilityId") {
+    return options.facilities.map((facility) => ({ value: facility.facilityId, label: displayDemoText(facility.label) }));
+  }
+  const list = field === "categoryCode" ? options.cargoCategories
+    : field === "packaging" ? options.packagingOptions
+    : field === "requiredEquipment" ? options.equipmentOptions : [];
+  return list.map((item) => ({ value: item.code, label: field === "requiredEquipment" ? ENGLISH_EQUIPMENT_LABELS[item.code] ?? item.labelEn
+    : field === "categoryCode" ? ENGLISH_CATEGORY_LABELS[item.code] ?? item.labelEn : item.labelEn }));
+}
+
+export function matchingConversationChoices(field: ConversationField, input: string, options: IntakeOptionsData): Array<{ value: string; label: string }> {
+  const search = input.trim().toLowerCase();
+  if (!search) return [];
+  if(field==="urgency")return [{value:"URGENT",label:"Urgente / Urgent"},{value:"SCHEDULED",label:"Sin urgencia / Not urgent"}];
+  if(field==="loadSize")return [{value:"LIGHT",label:"Liviana / Light"},{value:"MEDIUM",label:"Mediana / Medium"},{value:"HEAVY",label:"Pesada / Heavy"}];
+  if (field === "originFacilityId" || field === "destinationFacilityId") {
+    return options.facilities.filter((facility) => [facility.facilityId, facility.code, facility.label, facility.city]
+      .some((value) => value?.toLowerCase() === search || value?.toLowerCase().includes(search)))
+      .map((facility) => ({ value: facility.facilityId, label: `${displayDemoText(facility.label)} · ${facility.city}` }));
+  }
+  const singular = search.endsWith("s") ? search.slice(0, -1) : search;
+  const spanishAliases: Record<string, string[]> = {
+    GENERAL: ["carga general"], FOOD: ["alimentos", "comida"], PHARMA: ["farmacéutica", "farmaceutica", "medicinas"],
+    CHEMICAL: ["químicos", "quimicos"], MACHINERY: ["maquinaria"], CONSTRUCTION: ["materiales de construcción", "construcción"],
+    AGRICULTURAL: ["agrícola", "agricola", "productos agrícolas", "productos agricolas"], LIQUID: ["líquidos", "liquidos"],
+    BOX: ["caja", "cajas"], PALLET: ["pallet", "pallets", "palet", "palets"], CRATE: ["cajón", "cajon", "cajones"],
+  };
+  return choicesForField(field, options).filter((choice) => choice.value.toLowerCase() === search || choice.label.toLowerCase() === search || choice.label.toLowerCase() === singular || choice.label.toLowerCase().includes(search) || (spanishAliases[choice.value] ?? []).includes(search));
+}
+
+export function parseConversationField(field: ConversationField, input: string, options: IntakeOptionsData): string | null {
+  const value = input.trim();
+  if (!value) return null;
+  if(field==='urgency')return /^(?:sin urgencia|no urgente|no es urgente|programad[oa]|flexible|scheduled|not urgent|SCHEDULED)$/i.test(value)?'SCHEDULED':/^(?:urgente|urgent|URGENT)$/i.test(value)?'URGENT':null;
+  if(field==='loadSize')return /^(?:livian[oa]|liger[oa]|light)$/i.test(value)?'LIGHT':/^(?:median[oa]|media|medium)$/i.test(value)?'MEDIUM':/^(?:pesad[oa]|heavy)$/i.test(value)?'HEAVY':null;
+  if (["divisible", "unitIndivisible", "unitStackable"].includes(field)) {
+    if (/^(?:true|s[ií]|yes|se puede|permitido)[.!]?$/i.test(value)) return "true";
+    if (/^(?:false|no|no se puede|no permitido)[.!]?$/i.test(value)) return "false";
+    return null;
+  }
+  if (field === "requirements") {
+    if (/^(?:NONE|no|ningun[oa]|ninguno especial|sin requisitos especiales|none|no special requirements)[.!]?$/i.test(value)) return "NONE";
+    return options.requirementOptions.some(option => option.code === value.replace(/^!/, "")) ? value : null;
+  }
+  if (["temperatureMinCelsius","temperatureMaxCelsius"].includes(field)) return Number.isFinite(Number(value)) ? String(Number(value)) : null;
+  if (field.endsWith("Email") && /^(?:NONE|no tiene (?:correo|email)|sin correo|no email|none)[.!]?$/i.test(value)) return "NONE";
+  const choices = choicesForField(field, options);
+  if (choices.length) {
+    const byNumber = choices[Number(value) - 1];
+    const matches = matchingConversationChoices(field, value, options);
+    return byNumber?.value ?? (matches.length === 1 ? matches[0].value : null);
+  }
+  if (["unitQuantity"].includes(field) && (!Number.isInteger(Number(value)) || Number(value) <= 0)) return null;
+  if (["unitWeightPerUnitKg", "unitVolumePerUnitM3", "unitLengthCm", "unitWidthCm", "unitHeightCm"].includes(field)
+    && (!Number.isFinite(Number(value)) || Number(value) <= 0)) return null;
+  if (field.endsWith("At") && Number.isNaN(Date.parse(value))) return null;
+  return value;
+}
